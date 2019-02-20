@@ -1,18 +1,17 @@
+from pickle import load
 from numpy import argmax
 from keras.preprocessing.sequence import pad_sequences
-from keras.applications.vgg16 import VGG16
+from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
-from keras.applications.vgg16 import preprocess_input
+from keras.applications.inception_v3 import preprocess_input
 from keras.models import Model
-
-from pickle import load
 from keras.models import load_model
- 
+
 # extract features from each photo in the directory
 def extract_features(filename):
 	# load the model
-	model = VGG16()
+	model = InceptionV3()
 	# re-structure the model
 	model.layers.pop()
 	model = Model(inputs=model.inputs, outputs=model.layers[-1].output)
@@ -22,19 +21,19 @@ def extract_features(filename):
 	image = img_to_array(image)
 	# reshape data for the model
 	image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
-	# prepare the image for the VGG model
+	# prepare the image for the Inception model
 	image = preprocess_input(image)
 	# get features
-	feature = model.predict(image, verbose=0)
+	feature = model.predict(image, verbose=1)
 	return feature
- 
+
 # map an integer to a word
 def word_for_id(integer, tokenizer):
 	for word, index in tokenizer.word_index.items():
 		if index == integer:
 			return word
 	return None
- 
+
 # generate a description for an image
 def generate_desc(model, tokenizer, photo, max_length):
 	# seed the generation process
@@ -60,7 +59,7 @@ def generate_desc(model, tokenizer, photo, max_length):
 		if word == 'endseq':
 			break
 	return in_text
- 
+
 # load the tokenizer
 tokenizer = load(open('tokenizer.pkl', 'rb'))
 # pre-define the max sequence length (from training)
@@ -68,7 +67,8 @@ max_length = 34
 # load the model
 model = load_model('model_19.h5')
 # load and prepare the photograph
-photo = extract_features('Flickr_Data/Flickr Images/19212715_20476497a3.jpg')
+img = input("Enter Image Path: ")
+photo = extract_features(img)
 # generate description
 description = generate_desc(model, tokenizer, photo, max_length)
-print(description[8:-6])
+print(description[9:-6])
